@@ -1,17 +1,22 @@
 import React, { Component } from 'react';
 import TodoItem from './components/TodoItem';
-import { Button, Card } from 'semantic-ui-react';
+import { Button, Card, Menu, } from 'semantic-ui-react';
 import Header from './components/Header';
 import Form from './components/Form';
 import './App.css';
 import connect from './provider/Provider';
+import { mapFilter } from './utils/dash';
 
 
 const ENTER_KEY_CODE = 13;
+const FILTER_ALL = 'all';
+const FILTER_ACTIVE = 'active';
+const FITLER_COMPLETED = 'completed';
 
 class App extends Component {
   state = {
     todos: [],
+    filter: FILTER_ALL,
     activeText: ''
   }
   
@@ -62,12 +67,15 @@ class App extends Component {
     updateTodo(id, status);
   }
 
-  
+  onFilterPress = (filter) => {
+    // process the filteration on client side rather than server side request
+    this.setState({filter});
+  }
 
- 
   render() {
     const {
       activeText,
+      filter,
      } = this.state;
      
      const {
@@ -77,8 +85,9 @@ class App extends Component {
        onActiveFilterPress,
      } = this.props;
 
-    const todoViews = todos
-      .map((todo, index) => {
+    const todoViews = mapFilter(
+      todos,
+      (todo, index) => {
         return (
           <TodoItem 
             title={todo.title} 
@@ -89,7 +98,10 @@ class App extends Component {
             
           />
         )
-      }
+      },
+      (todo) => filter === FILTER_ALL
+        ? true
+        : todo.status === filter 
     );
     
     const all = todos.length;
@@ -102,11 +114,6 @@ class App extends Component {
           <Header
             title="TODO"
           />
-          <Footer
-            all={all}
-            completed={completed}
-            active={active}
-          />
           <Card style={styles.card}>
             <Form 
               onChange={this.onChange}
@@ -117,13 +124,19 @@ class App extends Component {
             </Button>
           </Card>
           <Filter 
-            onCompletedFilterPress={onCompletedFilterPress}
-            onAllFilterPress={onAllFilterPress}
-            onActiveFilterPress={onActiveFilterPress}
+            onCompletedFilterPress={this.onFilterPress.bind(this, FITLER_COMPLETED)}
+            onAllFilterPress={this.onFilterPress.bind(this, FILTER_ALL)}
+            onActiveFilterPress={this.onFilterPress.bind(this, FILTER_ACTIVE)}
+            filter={filter}
           />
           <Card >
             {todoViews}
           </Card>
+        <Footer
+            all={all}
+            completed={completed}
+            active={active}
+          />
         </div>
       </div>
     );
@@ -164,7 +177,9 @@ const Filter = ({
   onCompletedFilterPress,
   onAllFilterPress,
   onActiveFilterPress,
+  filter,
  }) => {
+  const color ='grey'
   return (
     <div className="footer" style={{
       display: 'flex',
@@ -172,9 +187,28 @@ const Filter = ({
       width: 350,
       justifyContent: 'space-between'
     }}>
-      <a onClick={onAllFilterPress}>{`ALL`}</a>
-      <a onClick={onCompletedFilterPress}>{`COMPLETED`}</a>
-      <a onClick={onActiveFilterPress}>{`ACTIVE`}</a>
+      <Menu color={color} widths={3} style={{
+        display: 'flex',
+        flex: 1,
+        width: 350,
+        justifyContent: 'space-between'
+      }}>
+        <Menu.Item 
+          name='all' 
+          active={filter === 'all'}
+          onClick={onAllFilterPress} 
+        />
+        <Menu.Item 
+          name='completed' 
+          active={filter === 'completed'}
+          onClick={onCompletedFilterPress} 
+        />
+        <Menu.Item 
+          name='active' 
+          active={filter === 'active'} 
+          onClick={onActiveFilterPress} 
+        />
+      </Menu>
     </div>
   )
 }

@@ -12,13 +12,15 @@ class Form extends React.Component {
   render() {
     const { onChange, activeText } = this.props;
     return (
-    <Input 
-        fluid
-        placeholder='Enter the task.'
-        onChange={onChange}
-        onSubmit={this.onSubmit}
-        value={activeText}
-      />
+    <Input
+      className='form'
+      fluid
+      size='large'
+      placeholder='Enter the task.'
+      onChange={onChange}
+      onSubmit={this.onSubmit}
+      value={activeText}
+    />
     );
   }
 }

@@ -29,3 +29,13 @@
 .App .ui.card {
   width: 350px !important;
 }
+.footer > div{
+  width: 400px;
+  background-color: 'red';
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.form {
+  height: 60px;
+}

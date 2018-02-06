@@ -18,72 +18,58 @@ const connect = WrappedComponent => (
       };
     }
 
-    getTodos = () => {
+    getTodos = async () => {
+      
       this.setState({
         loading: true,
       });
 
-      getTodosRequest()
-        .then(todos => {
-          this.setState({
-            todos: todos.data,
-            loading: false
-          });
+      try {
+        const todos = await getTodosRequest();
+        this.setState({
+          todos: todos.data,
+          loading: false,
         })
-        .catch(error => {
-          this.setState({
-            error: true,
-            loading: false,
-          });
+      } catch (error) {
+        this.setState({
+          error: true,
+          loading: false,
         });
+      }
+
     }
 
-    createTodo = (title) => {
+    createTodo = async (title) => {
       const requestObject = {
         title,
         status: 'active',
       }
-      
-      createTodoRequest(requestObject)
-        .then(response => {
-          const todos = [...this.state.todos, response.data];
-          this.setState({
-            todos,
-          });
-        })
-        .catch(error => {
-          console.log(error);
-        });
-    }
-
-    deleteTodo = (id) => {
-      const deleteRequestApi = makeRequest(`${BASE_URL}/todos/${id}`, 'DELETE');
-      deleteRequestApi()
-        .then(response => {
-          const todos = this.state.todos
-            .filter(todo => todo._id !== response.data._id);
-          this.setState({
-            todos,
-          });
-        })
-        .catch(error => {
-          console.log(error);
-        });
-    }
-    onFilterPress = (filterType) => {
-      if (filterType === 'all') {
-          this.getTodos()
-      } else {
-        const todos = this.state.todos
-          .filter(todo => todo.status === filterType);
+      try {
+        const response = await createTodoRequest(requestObject);
+        const todos = [response.data, ...this.state.todos];
         this.setState({
           todos,
         });
+      } catch (error) {
+        console.log(error);
       }
-      
     }
 
-    updateTodo = (id, status) => {
+    deleteTodo = async (id) => {
+      const deleteRequestApi = makeRequest(`${BASE_URL}/todos/${id}`, 'DELETE');
+      try {
+        const response = await deleteRequestApi();
+        const todos = this.state.todos
+          .filter(todo => todo._id !== response.data._id);
+        this.setState({
+          todos,
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    updateTodo = async (id, status) => {
       const updateRequestApi = makeRequest(`${BASE_URL}/todos/${id}`, 'PUT');
       status = status === 'completed' 
         ? 'active' 
@@ -91,32 +77,31 @@ const connect = WrappedComponent => (
       const requestObject = {
         status,
       }
-      updateRequestApi(requestObject)
-        .then(response => {
-          const todos = this.state.todos
-            .reduce((acc, todo) => {
-              return todo._id !== response.data._id 
-                ? [...acc, todo]
-                : [...acc, response.data]
-            }, {});
-          
-          this.setState({
-            todos,
-          });
-        })
+      try {
+        const response = await updateRequestApi(requestObject);
+        const { todos: oldTodos } = this.state;
+        const todos = oldTodos
+          .reduce((acc, todo) => {
+            return todo._id !== response.data._id
+              ? [...acc, todo]
+              : [...acc, response.data]
+          }, []);
+        // finally set the state
+        this.setState({
+          todos,
+        });
+      } catch (error) {
+        console.log(error);
+      }
     }
 
     render() {
-      console.log(this.state);
       return (
         <WrappedComponent
           getTodos={this.getTodos} 
           createTodo={this.createTodo}
           deleteTodo={this.deleteTodo}
           updateTodo={this.updateTodo}
-          onCompletedFilterPress={this.onFilterPress.bind(this, 'completed')}
-          onActiveFilterPress={this.onFilterPress.bind(this, 'active')}
-          onAllFilterPress={this.onFilterPress.bind(this, 'all')}
           {...this.state} 
         />
       )
